@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Suivi RP — Fumée d'Âme</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --v:#a066f0;--vd:rgba(160,102,240,.15);--vdim:rgba(160,102,240,.4);
+  --c:#7ed5f2;--cd:rgba(126,213,242,.12);--cdim:rgba(126,213,242,.4);
+  --bg:#04040a;--bg2:#07070f;--bg3:#0a0a14;
+  --txt:rgba(180,180,210,.8);--txt2:#eaeaf8;
+  --red:#e05a6a;--gold:#c8a55a;--green:#5ae0a0;
+  --border:rgba(160,102,240,.14);
+  --r:6px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);color:var(--txt);
+  font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.75;
+  overflow-x:hidden;
+  background-image:radial-gradient(rgba(160,102,240,.028) 1px,transparent 1px);
+  background-size:38px 38px;background-attachment:fixed;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── GRAIN ── */
+#grain{position:fixed;inset:0;z-index:9997;pointer-events:none;opacity:.025;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:200px 200px}
+/* ── AURORA ── */
+.aur{position:fixed;pointer-events:none;z-index:0;border-radius:50%;filter:blur(120px);opacity:.09}
+.aur.a1{width:700px;height:700px;background:radial-gradient(circle,var(--v),transparent 70%);top:-20%;left:-15%;animation:af1 24s ease-in-out infinite}
+.aur.a2{width:600px;height:600px;background:radial-gradient(circle,var(--c),transparent 70%);bottom:-15%;right:-10%;animation:af2 20s ease-in-out infinite}
+@keyframes af1{0%,100%{transform:translate(0,0)}50%{transform:translate(80px,-50px)}}
+@keyframes af2{0%,100%{transform:translate(0,0)}50%{transform:translate(-60px,40px)}}
+
+/* ── SMOKE CANVAS ── */
+#csmoke{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1;mix-blend-mode:screen;opacity:.45}
+
+/* ── SIDEBAR ── */
+#sidebar{
+  position:fixed;left:0;top:0;bottom:0;width:70px;z-index:50;
+  background:rgba(4,4,10,.8);backdrop-filter:blur(20px);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;align-items:center;padding:1.5rem 0;gap:.8rem;
+}
+.sb-logo{
+  font-family:'Cinzel Decorative',serif;font-size:1.3rem;color:var(--v);
+  margin-bottom:1.2rem;cursor:default;
+  text-shadow:0 0 20px rgba(160,102,240,.6);
+  writing-mode:vertical-rl;letter-spacing:.15em;font-size:.55rem;
+}
+.sb-icon{
+  width:44px;height:44px;border-radius:var(--r);border:1px solid transparent;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  cursor:pointer;transition:all .3s;text-decoration:none;position:relative;
+}
+.sb-icon:hover,.sb-icon.active{border-color:var(--vdim);background:var(--vd)}
+.sb-icon svg{width:18px;height:18px;stroke:rgba(160,102,240,.5);fill:none;stroke-width:1.5;transition:stroke .3s}
+.sb-icon:hover svg,.sb-icon.active svg{stroke:var(--v)}
+.sb-icon span{font-family:'Cinzel',serif;font-size:.38rem;letter-spacing:.1em;color:rgba(160,102,240,.4);text-transform:uppercase;transition:color .3s}
+.sb-icon:hover span,.sb-icon.active span{color:var(--v)}
+.sb-tip{position:absolute;left:calc(100% + 12px);white-space:nowrap;background:var(--bg3);border:1px solid var(--border);padding:.3rem .8rem;border-radius:4px;font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.2em;color:var(--txt2);pointer-events:none;opacity:0;transition:opacity .2s;z-index:999}
+.sb-icon:hover .sb-tip{opacity:1}
+
+/* ── MAIN ── */
+main{margin-left:70px;padding:2.5rem 3rem;position:relative;z-index:2}
+
+/* ── HEADER HERO ── */
+#hero-header{
+  min-height:34vh;display:flex;flex-direction:column;justify-content:center;
+  padding:3rem 0 2rem;border-bottom:1px solid var(--border);margin-bottom:3rem;
+  position:relative;overflow:hidden;
+}
+#hero-header::before{
+  content:'魂';position:absolute;right:-1%;top:50%;transform:translateY(-50%);
+  font-size:22rem;color:rgba(160,102,240,.03);pointer-events:none;line-height:1;
+  font-family:'Cinzel Decorative',serif;
+}
+.hero-label{font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.7em;color:var(--v);text-transform:uppercase;margin-bottom:.8rem;opacity:0;animation:fu .8s ease forwards .2s}
+.hero-title{font-family:'Cinzel Decorative',serif;font-size:clamp(1.6rem,4vw,3.2rem);background:linear-gradient(140deg,#fff 0%,var(--c) 38%,var(--v) 70%,#fff 100%);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1.1;margin-bottom:1rem;opacity:0;animation:fu .9s ease forwards .4s}
+.hero-sub{font-style:italic;font-size:1rem;color:rgba(180,180,210,.55);max-width:640px;opacity:0;animation:fu .9s ease forwards .6s;line-height:1.6}
+.hero-divider{width:220px;height:1px;background:linear-gradient(to right,transparent,var(--v),var(--c),transparent);margin:1.5rem 0;opacity:0;animation:fu .9s ease forwards .8s;box-shadow:0 0 10px rgba(126,213,242,.2)}
+
+/* ── STAT CARDS ROW ── */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;margin-bottom:3rem}
+.stat-card{
+  background:rgba(7,7,15,.7);border:1px solid var(--border);border-radius:var(--r);
+  padding:1.5rem 1.8rem;position:relative;overflow:hidden;
+  transition:border-color .3s,transform .3s;cursor:default;
+}
+.stat-card:hover{border-color:var(--vdim);transform:translateY(-3px)}
+.stat-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(160,102,240,.04),transparent);pointer-events:none}
+.sc-label{font-family:'Cinzel',serif;font-size:.52rem;letter-spacing:.4em;color:rgba(160,102,240,.6);text-transform:uppercase;margin-bottom:.6rem}
+.sc-value{font-family:'Cinzel Decorative',serif;font-size:2.2rem;color:var(--txt2);line-height:1;margin-bottom:.3rem}
+.sc-value span{font-size:1rem;color:var(--v);margin-left:.2rem}
+.sc-sub{font-size:.75rem;color:rgba(160,102,240,.5);font-style:italic}
+.sc-bar{height:3px;background:rgba(255,255,255,.05);border-radius:2px;margin-top:1rem;overflow:hidden}
+.sc-bar-fill{height:100%;border-radius:2px;background:linear-gradient(to right,var(--v),var(--c));transition:width 1s ease}
+
+/* ── SECTION WRAPPER ── */
+.section{margin-bottom:4rem;scroll-margin-top:2rem}
+.sec-head{display:flex;align-items:center;gap:1rem;margin-bottom:2rem}
+.sec-label{font-family:'Cinzel',serif;font-size:.52rem;letter-spacing:.5em;color:var(--v);text-transform:uppercase;text-shadow:0 0 15px rgba(160,102,240,.35)}
+.sec-line{flex:1;height:1px;background:linear-gradient(to right,var(--vdim),transparent)}
+.sec-diamond{width:6px;height:6px;background:linear-gradient(135deg,var(--v),var(--c));transform:rotate(45deg);flex-shrink:0;box-shadow:0 0 8px rgba(126,213,242,.4)}
+.sec-title{font-family:'Cinzel Decorative',serif;font-size:1.4rem;color:var(--txt2);margin-bottom:1.5rem}
+
+/* ── STAGES ── */
+.stages-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.2rem}
+.stage-card{
+  background:rgba(7,7,15,.7);border:1px solid var(--border);border-radius:var(--r);
+  padding:1.8rem;position:relative;overflow:hidden;transition:border-color .4s,transform .3s;
+}
+.stage-card:hover{border-color:rgba(160,102,240,.3);transform:translateY(-4px)}
+.stage-num{position:absolute;top:1.4rem;right:1.6rem;font-family:'Cinzel Decorative',serif;font-size:3.5rem;color:rgba(160,102,240,.06);line-height:1;pointer-events:none}
+.stage-badge{font-family:'Cinzel',serif;font-size:.5rem;letter-spacing:.4em;color:rgba(126,213,242,.6);text-transform:uppercase;margin-bottom:.6rem;display:block}
+.stage-name{font-family:'Cinzel',serif;font-size:.95rem;color:var(--txt2);margin-bottom:.4rem;letter-spacing:.05em}
+.stage-desc{font-size:.82rem;color:rgba(160,102,240,.55);font-style:italic;margin-bottom:1.2rem;line-height:1.6}
+.progress-wrap{position:relative;cursor:pointer}
+.progress-label{display:flex;justify-content:space-between;font-family:'Cinzel',serif;font-size:.5rem;letter-spacing:.2em;color:rgba(160,102,240,.5);margin-bottom:.4rem}
+.progress-bar{height:6px;background:rgba(255,255,255,.04);border-radius:3px;overflow:visible;position:relative}
+.progress-fill{height:100%;border-radius:3px;background:linear-gradient(to right,var(--v),var(--c));transition:width .6s ease;position:relative}
+.progress-fill::after{content:'';position:absolute;right:-1px;top:50%;transform:translateY(-50%);width:10px;height:10px;border-radius:50%;background:var(--c);box-shadow:0 0 8px var(--c);transition:opacity .3s}
+.progress-bar:hover .progress-fill::after{box-shadow:0 0 16px var(--c)}
+.progress-pct{font-family:'Cinzel Decorative',serif;font-size:.8rem;color:var(--c);margin-top:.4rem;text-align:right}
+.stage-status{display:inline-block;margin-top:.8rem;font-family:'Cinzel',serif;font-size:.48rem;letter-spacing:.3em;text-transform:uppercase;padding:.25rem .7rem;border-radius:20px;border:1px solid}
+.stage-status.locked{color:rgba(160,102,240,.35);border-color:rgba(160,102,240,.2);background:rgba(160,102,240,.05)}
+.stage-status.inprogress{color:#c8a55a;border-color:rgba(200,165,90,.35);background:rgba(200,165,90,.08)}
+.stage-status.mastered{color:#5ae0a0;border-color:rgba(90,224,160,.35);background:rgba(90,224,160,.08)}
+.stage-notes{margin-top:1rem;font-size:.82rem;color:var(--txt);line-height:1.65;border-left:2px solid rgba(160,102,240,.2);padding-left:.8rem;font-style:italic;white-space:pre-wrap}
+
+/* ── HOST LOG ── */
+.btn{
+  font-family:'Cinzel',serif;font-size:.52rem;letter-spacing:.3em;text-transform:uppercase;
+  padding:.5rem 1.4rem;border-radius:4px;border:1px solid var(--vdim);
+  background:rgba(160,102,240,.08);color:var(--v);cursor:pointer;
+  transition:all .25s;display:inline-flex;align-items:center;gap:.5rem;
+}
+.btn:hover{background:rgba(160,102,240,.2);border-color:var(--v);box-shadow:0 0 20px rgba(160,102,240,.2)}
+.btn.danger{border-color:rgba(224,90,106,.3);color:var(--red);background:rgba(224,90,106,.05)}
+.btn.danger:hover{background:rgba(224,90,106,.15);border-color:var(--red)}
+.btn.small{padding:.3rem .8rem;font-size:.45rem}
+.btn-row{display:flex;gap:.8rem;align-items:center;margin-bottom:1.5rem}
+
+.host-table{width:100%;border-collapse:separate;border-spacing:0 .5rem}
+.host-table th{font-family:'Cinzel',serif;font-size:.48rem;letter-spacing:.35em;color:rgba(160,102,240,.5);text-transform:uppercase;padding:.6rem 1rem;text-align:left;border-bottom:1px solid var(--border)}
+.host-table td{padding:.7rem 1rem;font-size:.85rem;background:rgba(7,7,15,.5);border-top:1px solid transparent;border-bottom:1px solid transparent;transition:background .2s}
+.host-table tr:hover td{background:rgba(160,102,240,.05)}
+.host-table td:first-child{border-left:1px solid var(--border);border-radius:var(--r) 0 0 var(--r)}
+.host-table td:last-child{border-right:1px solid var(--border);border-radius:0 var(--r) var(--r) 0}
+.host-table tr:hover td:first-child{border-left-color:var(--vdim)}
+.tag{display:inline-block;font-family:'Cinzel',serif;font-size:.44rem;letter-spacing:.25em;text-transform:uppercase;padding:.18rem .55rem;border-radius:20px;border:1px solid}
+.tag.faible{color:#5ae0a0;border-color:rgba(90,224,160,.3);background:rgba(90,224,160,.07)}
+.tag.complexe{color:#c8a55a;border-color:rgba(200,165,90,.3);background:rgba(200,165,90,.07)}
+.tag.puissant{color:#e05a6a;border-color:rgba(224,90,106,.3);background:rgba(224,90,106,.07)}
+.tag.succes{color:#5ae0a0;border-color:rgba(90,224,160,.3);background:rgba(90,224,160,.07)}
+.tag.expulsion{color:#c8a55a;border-color:rgba(200,165,90,.3);background:rgba(200,165,90,.07)}
+.tag.degats{color:#e05a6a;border-color:rgba(224,90,106,.3);background:rgba(224,90,106,.07)}
+.tag.rpk{color:#e05a6a;border-color:rgba(224,90,106,.6);background:rgba(224,90,106,.15);font-weight:700}
+.sync-mini{height:4px;border-radius:2px;background:rgba(255,255,255,.05);width:80px;overflow:hidden;display:inline-block;vertical-align:middle;margin-left:.4rem}
+.sync-mini-fill{height:100%;border-radius:2px;background:linear-gradient(to right,var(--v),var(--c))}
+.empty-state{text-align:center;padding:3rem;color:rgba(160,102,240,.3);font-style:italic;border:1px dashed rgba(160,102,240,.12);border-radius:var(--r);font-size:.9rem}
+
+/* ── RISKS ── */
+.risks-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+.risk-panel{background:rgba(7,7,15,.7);border:1px solid var(--border);border-radius:var(--r);padding:1.8rem;position:relative;overflow:hidden}
+.risk-panel::before{content:'';position:absolute;top:0;left:0;width:100%;height:3px;border-radius:var(--r) var(--r) 0 0}
+.risk-panel.rp-red::before{background:linear-gradient(to right,var(--red),rgba(224,90,106,0))}
+.risk-panel.rp-gold::before{background:linear-gradient(to right,var(--gold),rgba(200,165,90,0))}
+.risk-panel.rp-violet::before{background:linear-gradient(to right,var(--v),rgba(160,102,240,0))}
+.risk-title{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.35em;color:var(--txt2);text-transform:uppercase;margin-bottom:1.2rem;display:flex;align-items:center;gap:.6rem}
+.risk-title svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;flex-shrink:0}
+.risk-item{display:flex;align-items:flex-start;gap:.7rem;margin-bottom:.9rem;font-size:.83rem;color:var(--txt);line-height:1.6}
+.risk-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:.55rem}
+.rd-red{background:var(--red);box-shadow:0 0 6px rgba(224,90,106,.5)}
+.rd-gold{background:var(--gold);box-shadow:0 0 6px rgba(200,165,90,.4)}
+.rd-violet{background:var(--v);box-shadow:0 0 6px rgba(160,102,240,.4)}
+.stability-meter{margin-top:1.5rem}
+.stability-label{display:flex;justify-content:space-between;margin-bottom:.6rem}
+.stability-label span:first-child{font-family:'Cinzel',serif;font-size:.52rem;letter-spacing:.3em;color:rgba(160,102,240,.6);text-transform:uppercase}
+.stability-val{font-family:'Cinzel Decorative',serif;font-size:.9rem}
+.stability-track{height:10px;background:rgba(255,255,255,.04);border-radius:5px;overflow:hidden;position:relative;cursor:pointer}
+.stability-fill{height:100%;border-radius:5px;transition:width .5s ease,background .5s ease}
+
+/* ── JOURNAL ── */
+.journal-entries{display:flex;flex-direction:column;gap:1rem}
+.j-entry{
+  background:rgba(7,7,15,.7);border:1px solid var(--border);border-radius:var(--r);
+  padding:1.4rem 1.8rem;position:relative;overflow:hidden;transition:border-color .3s;
+}
+.j-entry:hover{border-color:rgba(160,102,240,.25)}
+.j-entry::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:linear-gradient(to bottom,var(--v),var(--c))}
+.j-meta{display:flex;align-items:center;gap:1rem;margin-bottom:.6rem}
+.j-date{font-family:'Cinzel',serif;font-size:.5rem;letter-spacing:.3em;color:rgba(126,213,242,.5);text-transform:uppercase}
+.j-category{font-family:'Cinzel',serif;font-size:.46rem;letter-spacing:.25em;color:rgba(160,102,240,.5);text-transform:uppercase;padding:.15rem .5rem;border:1px solid rgba(160,102,240,.2);border-radius:3px}
+.j-text{font-size:.9rem;color:var(--txt);line-height:1.75;white-space:pre-wrap}
+.j-actions{display:flex;gap:.5rem;margin-top:.8rem;justify-content:flex-end;opacity:0;transition:opacity .2s}
+.j-entry:hover .j-actions{opacity:1}
+
+/* ── MODAL ── */
+#modal-bg{position:fixed;inset:0;background:rgba(4,4,10,.85);backdrop-filter:blur(8px);z-index:200;display:none;align-items:center;justify-content:center}
+#modal-bg.open{display:flex}
+.modal{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:2.2rem 2.5rem;width:min(560px,90vw);max-height:90vh;overflow-y:auto;position:relative;animation:scaleIn .25s ease}
+@keyframes scaleIn{from{transform:scale(.94);opacity:0}to{transform:scale(1);opacity:1}}
+.modal h2{font-family:'Cinzel Decorative',serif;font-size:1.1rem;color:var(--txt2);margin-bottom:1.6rem}
+.modal-close{position:absolute;top:1.2rem;right:1.4rem;background:none;border:none;color:rgba(160,102,240,.4);font-size:1.4rem;cursor:pointer;transition:color .2s;line-height:1}
+.modal-close:hover{color:var(--v)}
+.form-row{margin-bottom:1.1rem}
+.form-row label{display:block;font-family:'Cinzel',serif;font-size:.5rem;letter-spacing:.3em;color:rgba(160,102,240,.6);text-transform:uppercase;margin-bottom:.4rem}
+.form-row input,.form-row select,.form-row textarea{
+  width:100%;background:rgba(4,4,10,.8);border:1px solid var(--border);border-radius:4px;
+  color:var(--txt2);font-family:'Cormorant Garamond',serif;font-size:.95rem;
+  padding:.55rem .9rem;outline:none;transition:border-color .2s;resize:vertical;
+}
+.form-row textarea{min-height:80px}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:var(--vdim)}
+.form-row select option{background:var(--bg3)}
+.form-row input[type=range]{padding:0;height:4px;-webkit-appearance:none;appearance:none;background:rgba(255,255,255,.06);border:none;border-radius:2px;cursor:pointer}
+.form-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--v);box-shadow:0 0 8px rgba(160,102,240,.5)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.modal-footer{display:flex;justify-content:flex-end;gap:.8rem;margin-top:1.5rem;border-top:1px solid var(--border);padding-top:1.2rem}
+
+/* ── ANIM ── */
+@keyframes fu{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s ease}
+.fade-in.visible{opacity:1;transform:translateY(0)}
+
+/* ── IMAGE UPLOAD ── */
+.img-drop{
+  border:1px dashed rgba(160,102,240,.3);border-radius:var(--r);
+  padding:1.4rem;text-align:center;cursor:pointer;transition:all .25s;
+  background:rgba(160,102,240,.03);position:relative;
+}
+.img-drop:hover,.img-drop.drag-over{border-color:var(--v);background:rgba(160,102,240,.08);box-shadow:0 0 20px rgba(160,102,240,.1)}
+.img-drop input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.img-drop-icon{font-size:1.6rem;opacity:.35;margin-bottom:.4rem}
+.img-drop-text{font-family:'Cinzel',serif;font-size:.5rem;letter-spacing:.3em;color:rgba(160,102,240,.5);text-transform:uppercase}
+.img-drop-sub{font-size:.75rem;color:rgba(160,102,240,.3);margin-top:.25rem;font-style:italic}
+
+.img-preview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:.5rem;margin-top:.8rem}
+.img-preview-thumb{
+  aspect-ratio:1;border-radius:4px;overflow:hidden;position:relative;
+  border:1px solid rgba(160,102,240,.2);cursor:pointer;
+}
+.img-preview-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.img-preview-thumb .rm-img{
+  position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:50%;
+  background:rgba(224,90,106,.85);border:none;color:#fff;cursor:pointer;
+  font-size:.65rem;display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:opacity .2s;line-height:1;
+}
+.img-preview-thumb:hover .rm-img{opacity:1}
+
+/* Images dans les entrées journal */
+.j-images{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.6rem;margin-top:.9rem}
+.j-img-wrap{
+  aspect-ratio:16/10;border-radius:4px;overflow:hidden;cursor:pointer;
+  border:1px solid rgba(160,102,240,.15);transition:border-color .25s,transform .25s;
+}
+.j-img-wrap:hover{border-color:var(--vdim);transform:scale(1.02)}
+.j-img-wrap img{width:100%;height:100%;object-fit:cover;display:block}
+
+/* ── LIGHTBOX ── */
+#lightbox{
+  position:fixed;inset:0;background:rgba(4,4,10,.95);backdrop-filter:blur(12px);
+  z-index:500;display:none;align-items:center;justify-content:center;flex-direction:column;
+}
+#lightbox.open{display:flex}
+#lightbox img{max-width:90vw;max-height:85vh;object-fit:contain;border-radius:4px;border:1px solid rgba(160,102,240,.2);box-shadow:0 0 60px rgba(160,102,240,.15)}
+#lightbox-close{position:absolute;top:1.5rem;right:2rem;background:none;border:none;color:rgba(160,102,240,.5);font-size:2rem;cursor:pointer;transition:color .2s;line-height:1}
+#lightbox-close:hover{color:var(--v)}
+#lightbox-nav{display:flex;gap:1rem;margin-top:1rem}
+.lb-btn{font-family:'Cinzel',serif;font-size:.5rem;letter-spacing:.3em;text-transform:uppercase;padding:.4rem 1rem;border-radius:4px;border:1px solid rgba(160,102,240,.3);background:rgba(160,102,240,.08);color:rgba(160,102,240,.6);cursor:pointer;transition:all .2s}
+.lb-btn:hover{border-color:var(--v);color:var(--v);background:rgba(160,102,240,.15)}
+#lightbox-counter{font-family:'Cinzel',serif;font-size:.5rem;letter-spacing:.3em;color:rgba(160,102,240,.35);text-align:center;margin-top:.5rem}
+
+/* ── SCROLL BAR ── */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(160,102,240,.3);border-radius:2px}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  #sidebar{width:54px}main{margin-left:54px;padding:1.5rem}
+  .stats-row,.stages-grid,.risks-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div id="grain"></div>
+<div class="aur a1"></div>
+<div class="aur a2"></div>
+<canvas id="csmoke"></canvas>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="sb-logo">魂</div>
+  <a class="sb-icon active" href="#apercu" onclick="setActive(this)">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
+    <span>Aperçu</span>
+    <div class="sb-tip">Aperçu</div>
+  </a>
+  <a class="sb-icon" href="#maitrise" onclick="setActive(this)">
+    <svg viewBox="0 0 24 24"><path d="M12 2C6 2 3 7 3 12s3 10 9 10 9-5 9-10S18 2 12 2"/><path d="M12 8v4l3 3"/></svg>
+    <span>Maîtrise</span>
+    <div class="sb-tip">Maîtrise</div>
+  </a>
+  <a class="sb-icon" href="#hotes" onclick="setActive(this)">
+    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    <span>Hôtes</span>
+    <div class="sb-tip">Journal Hôtes</div>
+  </a>
+  <a class="sb-icon" href="#risques" onclick="setActive(this)">
+    <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    <span>Risques</span>
+    <div class="sb-tip">Risques</div>
+  </a>
+  <a class="sb-icon" href="#journal" onclick="setActive(this)">
+    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+    <span>Journal</span>
+    <div class="sb-tip">Journal RP</div>
+  </a>
+</nav>
+
+<main>
+  <!-- HERO -->
+  <section id="apercu">
+    <div id="hero-header">
+      <span class="hero-label">Tableau de Bord — Progression Roleplay</span>
+      <h1 class="hero-title">Fumée d'Âme</h1>
+      <div class="hero-divider"></div>
+      <p class="hero-sub">Maîtrise de la dispersion corporelle en particules de chakra — infiltration, synchronisation sensorielle et influence progressive sur les hôtes vivants.</p>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card fade-in">
+        <div class="sc-label">Niveau de Maîtrise Global</div>
+        <div class="sc-value" id="sc-global">0<span>%</span></div>
+        <div class="sc-sub">Moyenne des 4 stades</div>
+        <div class="sc-bar"><div class="sc-bar-fill" id="sc-global-bar" style="width:0%"></div></div>
+      </div>
+      <div class="stat-card fade-in">
+        <div class="sc-label">Sessions d'Infiltration</div>
+        <div class="sc-value" id="sc-sessions">0<span>↗</span></div>
+        <div class="sc-sub" id="sc-sessions-sub">Aucun hôte enregistré</div>
+        <div class="sc-bar"><div class="sc-bar-fill" id="sc-sessions-bar" style="width:0%"></div></div>
+      </div>
+      <div class="stat-card fade-in">
+        <div class="sc-label">Stabilité Mentale</div>
+        <div class="sc-value" id="sc-stability">100<span>%</span></div>
+        <div class="sc-sub" id="sc-stability-label">Identité intacte</div>
+        <div class="sc-bar"><div class="sc-bar-fill" id="sc-stability-bar" style="width:100%"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MAÎTRISE -->
+  <section class="section" id="maitrise">
+    <div class="sec-head">
+      <span class="sec-label">Progression</span>
+      <div class="sec-diamond"></div>
+      <div class="sec-line"></div>
+    </div>
+    <div class="sec-title fade-in">Stades de Maîtrise</div>
+    <div class="stages-grid" id="stages-grid"></div>
+  </section>
+
+  <!-- HÔTES -->
+  <section class="section" id="hotes">
+    <div class="sec-head">
+      <span class="sec-label">Terrain</span>
+      <div class="sec-diamond"></div>
+      <div class="sec-line"></div>
+    </div>
+    <div class="sec-title fade-in">Journal des Hôtes</div>
+    <div class="btn-row">
+      <button class="btn" onclick="openModal('host')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Ajouter une infiltration
+      </button>
+    </div>
+    <table class="host-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Hôte</th>
+          <th>Catégorie</th>
+          <th>Date RP</th>
+          <th>Durée</th>
+          <th>Sync.</th>
+          <th>Résultat</th>
+          <th>Notes</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="host-tbody"></tbody>
+    </table>
+    <div id="host-empty" class="empty-state" style="display:none">
+      <div style="font-size:2rem;opacity:.3;margin-bottom:.5rem">◈</div>
+      Aucune infiltration enregistrée. Commence ton premier vol en fumée.
+    </div>
+  </section>
+
+  <!-- RISQUES -->
+  <section class="section" id="risques">
+    <div class="sec-head">
+      <span class="sec-label">Contraintes</span>
+      <div class="sec-diamond"></div>
+      <div class="sec-line"></div>
+    </div>
+    <div class="sec-title fade-in">Risques & Contraintes</div>
+    <div class="risks-grid">
+      <div class="risk-panel rp-red fade-in">
+        <div class="risk-title" style="color:var(--red)">
+          <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Dangers Mortels
+        </div>
+        <div class="risk-item"><div class="risk-dot rd-red"></div><div>Mort ou blessure grave de l'hôte → destruction instantanée du corps → <strong style="color:var(--red)">RPK total</strong></div></div>
+        <div class="risk-item"><div class="risk-dot rd-red"></div><div>Corps entièrement dispersé = dépendance absolue à la survie de l'hôte</div></div>
+        <div class="risk-item"><div class="risk-dot rd-red"></div><div>Expulsion violente par un esprit ou organisme résistant → dégâts mentaux potentiels</div></div>
+      </div>
+      <div class="risk-panel rp-gold fade-in">
+        <div class="risk-title" style="color:var(--gold)">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Risques Variables
+        </div>
+        <div class="risk-item"><div class="risk-dot rd-gold"></div><div>Hôte puissant / rapide / instable → risque exponentiellement plus élevé</div></div>
+        <div class="risk-item"><div class="risk-dot rd-gold"></div><div>Animal complexe (corbeau, prédateur) → utilité accrue mais danger multiplié</div></div>
+        <div class="risk-item"><div class="risk-dot rd-gold"></div><div>Forte résistance naturelle → expulsion forcée, désynchronisation brutale</div></div>
+      </div>
+      <div class="risk-panel rp-violet fade-in">
+        <div class="risk-title" style="color:var(--v)">
+          <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/></svg>
+          Durée & Stabilité
+        </div>
+        <div class="risk-item"><div class="risk-dot rd-violet"></div><div>Présence prolongée → confusion identitaire progressive entre soi et l'hôte</div></div>
+        <div class="risk-item"><div class="risk-dot rd-violet"></div><div>Risque d'altération comportementale et de perte de stabilité mentale</div></div>
+        <div class="risk-item"><div class="risk-dot rd-violet"></div><div>Désynchronisation brutale → perte temporaire de contrôle de la fumée</div></div>
+      </div>
+      <div class="risk-panel rp-violet fade-in">
+        <div class="risk-title" style="color:var(--c)">
+          <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          Stabilité Mentale Actuelle
+        </div>
+        <div class="stability-meter">
+          <div class="stability-label">
+            <span>Intégrité identitaire</span>
+            <span class="stability-val" id="stab-val" style="color:var(--green)">100%</span>
+          </div>
+          <div class="stability-track" id="stab-track" title="Cliquer pour ajuster">
+            <div class="stability-fill" id="stab-fill" style="width:100%;background:linear-gradient(to right,#5ae0a0,#7ed5f2)"></div>
+          </div>
+          <div style="font-size:.75rem;color:rgba(160,102,240,.4);margin-top:.5rem;font-style:italic" id="stab-desc">Identité intacte — aucune confusion détectée</div>
+        </div>
+        <div style="margin-top:1.2rem;display:flex;gap:.6rem;flex-wrap:wrap">
+          <button class="btn small" onclick="adjustStability(-10)">−10%</button>
+          <button class="btn small" onclick="adjustStability(-5)">−5%</button>
+          <button class="btn small" onclick="adjustStability(5)">+5%</button>
+          <button class="btn small" onclick="adjustStability(10)">+10%</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- JOURNAL -->
+  <section class="section" id="journal">
+    <div class="sec-head">
+      <span class="sec-label">Chronique</span>
+      <div class="sec-diamond"></div>
+      <div class="sec-line"></div>
+    </div>
+    <div class="sec-title fade-in">Journal d'Avancées RP</div>
+    <div class="btn-row">
+      <button class="btn" onclick="openModal('journal')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nouvelle entrée
+      </button>
+    </div>
+    <div class="journal-entries" id="journal-list"></div>
+    <div id="journal-empty" class="empty-state" style="display:none">
+      <div style="font-size:2rem;opacity:.3;margin-bottom:.5rem">✦</div>
+      Le journal est vide. Note tes premières avancées ici.
+    </div>
+  </section>
+</main>
+
+<!-- MODALS -->
+<div id="modal-bg">
+  <!-- Host Modal -->
+  <div class="modal" id="modal-host" style="display:none">
+    <h2>Nouvelle Infiltration</h2>
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="form-grid">
+      <div class="form-row">
+        <label>Hôte (espèce / être)</label>
+        <input type="text" id="h-nom" placeholder="ex : Corbeau, Loup, Humain…">
+      </div>
+      <div class="form-row">
+        <label>Date RP</label>
+        <input type="text" id="h-date" placeholder="ex : Arc 3, Scène 2…">
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="form-row">
+        <label>Catégorie de risque</label>
+        <select id="h-cat">
+          <option value="faible">Faible (animal simple)</option>
+          <option value="complexe">Complexe (corbeau, etc.)</option>
+          <option value="puissant">Puissant / Instable</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Durée estimée</label>
+        <input type="text" id="h-duree" placeholder="ex : ~20 min, court…">
+      </div>
+    </div>
+    <div class="form-row">
+      <label>Niveau de synchronisation atteint — <span id="h-sync-val">50</span>%</label>
+      <input type="range" id="h-sync" min="0" max="100" value="50" oninput="document.getElementById('h-sync-val').textContent=this.value">
+    </div>
+    <div class="form-row">
+      <label>Résultat</label>
+      <select id="h-result">
+        <option value="succes">Succès — contrôle maintenu</option>
+        <option value="expulsion">Expulsion — rejeté par l'hôte</option>
+        <option value="degats">Dégâts mentaux — désynchronisation</option>
+        <option value="rpk">RPK — mort de l'hôte</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Notes de la scène</label>
+      <textarea id="h-notes" placeholder="Ce qui s'est passé, les apprentissages, les difficultés…"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn danger" onclick="closeModal()">Annuler</button>
+      <button class="btn" onclick="saveHost()">Enregistrer</button>
+    </div>
+  </div>
+
+  <!-- Journal Modal -->
+  <div class="modal" id="modal-journal" style="display:none">
+    <h2>Nouvelle Entrée de Journal</h2>
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="form-grid">
+      <div class="form-row">
+        <label>Date / Repère RP</label>
+        <input type="text" id="j-date" placeholder="ex : Arc 2, Session 4…">
+      </div>
+      <div class="form-row">
+        <label>Catégorie</label>
+        <select id="j-cat">
+          <option value="Découverte">Découverte</option>
+          <option value="Progression">Progression</option>
+          <option value="Incident">Incident</option>
+          <option value="Réflexion">Réflexion</option>
+          <option value="Objectif">Objectif</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <label>Entrée du journal</label>
+      <textarea id="j-text" style="min-height:130px" placeholder="Décris librement ce qui s'est passé, ce que tu as ressenti, les limites rencontrées, les progrès effectués…"></textarea>
+    </div>
+    <div class="form-row">
+      <label>Screenshots / Illustrations</label>
+      <div class="img-drop" id="j-drop" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+        <input type="file" id="j-files" accept="image/*" multiple onchange="onFilePick(event)">
+        <div class="img-drop-icon">🖼</div>
+        <div class="img-drop-text">Glisse tes screens ici ou clique</div>
+        <div class="img-drop-sub">PNG, JPG, GIF, WEBP — plusieurs fichiers acceptés</div>
+      </div>
+      <div class="img-preview-grid" id="j-preview"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn danger" onclick="closeModal()">Annuler</button>
+      <button class="btn" onclick="saveJournal()">Enregistrer</button>
+    </div>
+  </div>
+
+  <!-- Stage Edit Modal -->
+  <div class="modal" id="modal-stage" style="display:none">
+    <h2 id="modal-stage-title">Modifier le stade</h2>
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <input type="hidden" id="s-idx">
+    <div class="form-row">
+      <label>Progression — <span id="s-pct-val">0</span>%</label>
+      <input type="range" id="s-pct" min="0" max="100" value="0" oninput="document.getElementById('s-pct-val').textContent=this.value">
+    </div>
+    <div class="form-row">
+      <label>Statut</label>
+      <select id="s-status">
+        <option value="locked">Non débloqué</option>
+        <option value="inprogress">En cours</option>
+        <option value="mastered">Maîtrisé</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Notes & observations</label>
+      <textarea id="s-notes" style="min-height:100px" placeholder="Ce que tu as appris, les conditions, les difficultés…"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn danger" onclick="closeModal()">Annuler</button>
+      <button class="btn" onclick="saveStage()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div id="lightbox">
+  <button id="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightbox-img" src="" alt="">
+  <div id="lightbox-nav">
+    <button class="lb-btn" onclick="lbNav(-1)">← Précédent</button>
+    <button class="lb-btn" onclick="lbNav(1)">Suivant →</button>
+  </div>
+  <div id="lightbox-counter"></div>
+</div>
+
+<script>
+/* ── SMOKE ── */
+(function(){
+  const cv=document.getElementById('csmoke');
+  const ctx=cv.getContext('2d');
+  cv.width=window.innerWidth;cv.height=window.innerHeight;
+  window.addEventListener('resize',()=>{cv.width=window.innerWidth;cv.height=window.innerHeight;});
+  class P{
+    constructor(init){
+      this.x=Math.random()*cv.width;
+      this.y=init?Math.random()*cv.height:cv.height+60;
+      this.r=Math.random()*55+18;
+      this.vx=(Math.random()-.5)*.18;
+      this.vy=-(Math.random()*.25+.06);
+      this.op=0;this.mop=Math.random()*.07+.025;
+      this.life=0;this.maxl=Math.random()*280+160;
+      this.hue=Math.random()<.55?267:197;
+    }
+    update(){
+      this.x+=this.vx;this.y+=this.vy;this.life++;
+      const half=this.maxl/2;
+      this.op=this.life<half?Math.min((this.life/half)*this.mop,this.mop):(1-(this.life-half)/half)*this.mop;
+      this.r+=.06;
+      if(this.life>this.maxl){this.x=Math.random()*cv.width;this.y=cv.height+60;this.r=Math.random()*55+18;this.vx=(Math.random()-.5)*.18;this.vy=-(Math.random()*.25+.06);this.op=0;this.life=0;this.maxl=Math.random()*280+160;}
+    }
+    draw(){
+      const g=ctx.createRadialGradient(this.x,this.y,0,this.x,this.y,this.r);
+      g.addColorStop(0,`hsla(${this.hue},70%,70%,${this.op})`);
+      g.addColorStop(1,`hsla(${this.hue},70%,70%,0)`);
+      ctx.beginPath();ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+      ctx.fillStyle=g;ctx.fill();
+    }
+  }
+  const ps=Array.from({length:55},(_,i)=>new P(i<30));
+  function loop(){ctx.clearRect(0,0,cv.width,cv.height);ps.forEach(p=>{p.update();p.draw();});requestAnimationFrame(loop);}
+  loop();
+})();
+
+/* ── SIDEBAR ACTIVE ── */
+function setActive(el){document.querySelectorAll('.sb-icon').forEach(e=>e.classList.remove('active'));el.classList.add('active');}
+
+/* ── STATE ── */
+const KEY='fumee-rp-v2';
+let state=JSON.parse(localStorage.getItem(KEY)||'null')||{
+  stages:[
+    {id:0,badge:'Stade I',name:'Dispersion & Infiltration',desc:'Disperser son corps en particules de chakra et pénétrer dans un être vivant par contact ou respiration.',pct:0,status:'locked',notes:''},
+    {id:1,badge:'Stade II',name:'Synchronisation Sensorielle',desc:'La fumée se synchronise avec le flux de chakra de la cible — percevoir ses sens (vue, odorat, ouïe).',pct:0,status:'locked',notes:''},
+    {id:2,badge:'Stade III',name:'Influence des Instincts',desc:'Agir sur les instincts et comportements simples de la cible, sans prise de contrôle totale encore.',pct:0,status:'locked',notes:''},
+    {id:3,badge:'Stade IV',name:'Pilotage Partiel',desc:'Piloter partiellement la cible tout en conservant un retour possible vers le corps d\'origine.',pct:0,status:'locked',notes:''},
+  ],
+  hosts:[],
+  journal:[],
+  stability:100,
+};
+
+function save(){localStorage.setItem(KEY,JSON.stringify(state));}
+
+/* ── RENDER STAGES ── */
+function renderStages(){
+  const g=document.getElementById('stages-grid');
+  g.innerHTML=state.stages.map((s,i)=>`
+  <div class="stage-card fade-in">
+    <div class="stage-num">${'ⅠⅡⅢⅣ'.split('')[i]||i+1}</div>
+    <span class="stage-badge">${s.badge}</span>
+    <div class="stage-name">${s.name}</div>
+    <div class="stage-desc">${s.desc}</div>
+    <div class="progress-wrap" title="Modifier">
+      <div class="progress-label"><span>Progression</span><span>${s.pct}%</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${s.pct}%"></div></div>
+    </div>
+    <span class="stage-status ${s.status}">${{locked:'Non débloqué',inprogress:'En cours',mastered:'Maîtrisé'}[s.status]}</span>
+    ${s.notes?`<div class="stage-notes">${escHtml(s.notes)}</div>`:''}
+    <div style="margin-top:1rem">
+      <button class="btn small" onclick="editStage(${i})">✦ Modifier</button>
+    </div>
+  </div>`).join('');
+  observeFade();
+}
+
+/* ── RENDER HOSTS ── */
+function renderHosts(){
+  const tbody=document.getElementById('host-tbody');
+  const empty=document.getElementById('host-empty');
+  if(!state.hosts.length){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  tbody.innerHTML=state.hosts.map((h,i)=>`
+  <tr>
+    <td style="color:rgba(160,102,240,.4);font-family:'Cinzel',serif;font-size:.7rem">${String(i+1).padStart(2,'0')}</td>
+    <td style="color:var(--txt2);font-weight:500">${escHtml(h.nom)}</td>
+    <td><span class="tag ${h.cat}">${{faible:'Faible',complexe:'Complexe',puissant:'Puissant'}[h.cat]}</span></td>
+    <td style="font-size:.8rem">${escHtml(h.date)}</td>
+    <td style="font-size:.8rem">${escHtml(h.duree)}</td>
+    <td>
+      <span style="font-family:'Cinzel Decorative',serif;font-size:.85rem;color:var(--c)">${h.sync}%</span>
+      <div class="sync-mini"><div class="sync-mini-fill" style="width:${h.sync}%"></div></div>
+    </td>
+    <td><span class="tag ${h.result}">${{succes:'Succès',expulsion:'Expulsion',degats:'Dégâts mentaux',rpk:'RPK'}[h.result]}</span></td>
+    <td style="font-size:.78rem;max-width:180px;color:var(--txt)">${h.notes?escHtml(h.notes).substring(0,60)+(h.notes.length>60?'…':''):''}</td>
+    <td><button class="btn small danger" onclick="deleteHost(${i})">✕</button></td>
+  </tr>`).join('');
+}
+
+/* ── RENDER JOURNAL ── */
+function renderJournal(){
+  const list=document.getElementById('journal-list');
+  const empty=document.getElementById('journal-empty');
+  if(!state.journal.length){list.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  list.innerHTML=[...state.journal].reverse().map((j,ri)=>{
+    const i=state.journal.length-1-ri;
+    const imgs=j.images&&j.images.length?`<div class="j-images">${j.images.map((src,ii)=>`<div class="j-img-wrap" onclick="openLightbox(${i},${ii})"><img src="${src}" alt="screen ${ii+1}" loading="lazy"></div>`).join('')}</div>`:'';
+    return`<div class="j-entry fade-in">
+    <div class="j-meta">
+      <span class="j-date">${escHtml(j.date)}</span>
+      <span class="j-category">${escHtml(j.cat)}</span>
+      ${j.images&&j.images.length?`<span class="j-category" style="color:var(--c);border-color:rgba(126,213,242,.2)">📷 ${j.images.length}</span>`:''}
+    </div>
+    <div class="j-text">${escHtml(j.text)}</div>
+    ${imgs}
+    <div class="j-actions">
+      <button class="btn small danger" onclick="deleteJournal(${i})">Supprimer</button>
+    </div>
+  </div>`;}).join('');
+  observeFade();
+}
+
+/* ── STATS UPDATE ── */
+function updateStats(){
+  const avg=Math.round(state.stages.reduce((a,s)=>a+s.pct,0)/state.stages.length);
+  document.getElementById('sc-global').innerHTML=`${avg}<span>%</span>`;
+  document.getElementById('sc-global-bar').style.width=avg+'%';
+
+  const n=state.hosts.length;
+  document.getElementById('sc-sessions').innerHTML=`${n}<span>↗</span>`;
+  const lastRes=n?{succes:'Dernier: Succès',expulsion:'Dernier: Expulsion',degats:'Dernier: Dégâts mentaux',rpk:'Dernier: RPK'}[state.hosts[n-1]?.result]:'Aucun hôte enregistré';
+  document.getElementById('sc-sessions-sub').textContent=lastRes;
+  document.getElementById('sc-sessions-bar').style.width=Math.min(n*10,100)+'%';
+
+  const s=state.stability;
+  document.getElementById('sc-stability').innerHTML=`${s}<span>%</span>`;
+  document.getElementById('sc-stability-bar').style.width=s+'%';
+  document.getElementById('sc-stability-bar').style.background=s>70?'linear-gradient(to right,#5ae0a0,#7ed5f2)':s>40?'linear-gradient(to right,#c8a55a,#e0a050)':'linear-gradient(to right,#e05a6a,#c0304a)';
+  document.getElementById('sc-stability-label').textContent=s>70?'Identité stable':s>40?'Légère confusion':'Instabilité critique';
+
+  document.getElementById('stab-val').textContent=s+'%';
+  document.getElementById('stab-val').style.color=s>70?'var(--green)':s>40?'var(--gold)':'var(--red)';
+  document.getElementById('stab-fill').style.width=s+'%';
+  document.getElementById('stab-fill').style.background=s>70?'linear-gradient(to right,#5ae0a0,#7ed5f2)':s>40?'linear-gradient(to right,#c8a55a,#e0a050)':'linear-gradient(to right,#e05a6a,#c0304a)';
+  document.getElementById('stab-desc').textContent=s===100?'Identité intacte — aucune confusion détectée':s>70?'Légères interférences — stabilité maintenue':s>40?'Confusion notable — surveillance accrue requise':'ALERTE — Instabilité identitaire critique';
+}
+
+/* ── STABILITY ── */
+function adjustStability(delta){
+  state.stability=Math.max(0,Math.min(100,state.stability+delta));
+  save();updateStats();
+}
+
+/* ── MODAL ── */
+let curModal=null;
+function openModal(type){
+  document.getElementById('modal-bg').classList.add('open');
+  document.getElementById('modal-host').style.display='none';
+  document.getElementById('modal-journal').style.display='none';
+  document.getElementById('modal-stage').style.display='none';
+  document.getElementById('modal-'+type).style.display='block';
+  if(type==='journal'){pendingImgs=[];renderPreview();}
+  curModal=type;
+}
+function closeModal(){
+  document.getElementById('modal-bg').classList.remove('open');
+  curModal=null;
+}
+document.getElementById('modal-bg').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
+
+/* ── EDIT STAGE ── */
+function editStage(i){
+  const s=state.stages[i];
+  document.getElementById('s-idx').value=i;
+  document.getElementById('modal-stage-title').textContent=s.badge+' — '+s.name;
+  document.getElementById('s-pct').value=s.pct;
+  document.getElementById('s-pct-val').textContent=s.pct;
+  document.getElementById('s-status').value=s.status;
+  document.getElementById('s-notes').value=s.notes;
+  openModal('stage');
+}
+function saveStage(){
+  const i=+document.getElementById('s-idx').value;
+  state.stages[i].pct=+document.getElementById('s-pct').value;
+  state.stages[i].status=document.getElementById('s-status').value;
+  state.stages[i].notes=document.getElementById('s-notes').value;
+  save();renderStages();updateStats();closeModal();
+}
+
+/* ── SAVE HOST ── */
+function saveHost(){
+  const nom=document.getElementById('h-nom').value.trim();
+  if(!nom){alert('Renseigne le nom de l\'hôte');return;}
+  state.hosts.push({
+    nom,
+    date:document.getElementById('h-date').value.trim()||'—',
+    cat:document.getElementById('h-cat').value,
+    duree:document.getElementById('h-duree').value.trim()||'—',
+    sync:+document.getElementById('h-sync').value,
+    result:document.getElementById('h-result').value,
+    notes:document.getElementById('h-notes').value.trim(),
+  });
+  document.getElementById('h-nom').value='';document.getElementById('h-date').value='';
+  document.getElementById('h-duree').value='';document.getElementById('h-notes').value='';
+  document.getElementById('h-sync').value=50;document.getElementById('h-sync-val').textContent='50';
+  save();renderHosts();updateStats();closeModal();
+}
+function deleteHost(i){if(!confirm('Supprimer cette entrée ?'))return;state.hosts.splice(i,1);save();renderHosts();updateStats();}
+
+/* ── IMAGE HANDLING ── */
+let pendingImgs=[];
+
+function onDragOver(e){e.preventDefault();document.getElementById('j-drop').classList.add('drag-over');}
+function onDragLeave(e){document.getElementById('j-drop').classList.remove('drag-over');}
+function onDrop(e){
+  e.preventDefault();document.getElementById('j-drop').classList.remove('drag-over');
+  readFiles([...e.dataTransfer.files]);
+}
+function onFilePick(e){readFiles([...e.target.files]);e.target.value='';}
+
+function readFiles(files){
+  files.filter(f=>f.type.startsWith('image/')).forEach(f=>{
+    const r=new FileReader();
+    r.onload=ev=>{pendingImgs.push(ev.target.result);renderPreview();};
+    r.readAsDataURL(f);
+  });
+}
+
+function renderPreview(){
+  const grid=document.getElementById('j-preview');
+  grid.innerHTML=pendingImgs.map((src,i)=>`
+    <div class="img-preview-thumb">
+      <img src="${src}" alt="preview">
+      <button class="rm-img" onclick="removePreviewImg(${i})">✕</button>
+    </div>`).join('');
+}
+
+function removePreviewImg(i){pendingImgs.splice(i,1);renderPreview();}
+
+/* ── LIGHTBOX ── */
+let lbImgs=[],lbIdx=0;
+function openLightbox(entryIdx,imgIdx){
+  const entry=state.journal[entryIdx];
+  if(!entry||!entry.images||!entry.images.length)return;
+  lbImgs=entry.images;lbIdx=imgIdx;
+  document.getElementById('lightbox-img').src=lbImgs[lbIdx];
+  document.getElementById('lightbox-counter').textContent=`${lbIdx+1} / ${lbImgs.length}`;
+  document.getElementById('lightbox').classList.add('open');
+  document.getElementById('lightbox-nav').style.display=lbImgs.length>1?'flex':'none';
+}
+function closeLightbox(){document.getElementById('lightbox').classList.remove('open');lbImgs=[];lbIdx=0;}
+function lbNav(dir){
+  lbIdx=(lbIdx+dir+lbImgs.length)%lbImgs.length;
+  document.getElementById('lightbox-img').src=lbImgs[lbIdx];
+  document.getElementById('lightbox-counter').textContent=`${lbIdx+1} / ${lbImgs.length}`;
+}
+document.getElementById('lightbox').addEventListener('click',e=>{if(e.target===e.currentTarget)closeLightbox();});
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('lightbox').classList.contains('open'))return;
+  if(e.key==='Escape')closeLightbox();
+  if(e.key==='ArrowLeft')lbNav(-1);
+  if(e.key==='ArrowRight')lbNav(1);
+});
+
+/* ── SAVE JOURNAL ── */
+function saveJournal(){
+  const text=document.getElementById('j-text').value.trim();
+  if(!text&&!pendingImgs.length){alert('Écris quelque chose ou ajoute au moins une image');return;}
+  state.journal.push({
+    date:document.getElementById('j-date').value.trim()||'—',
+    cat:document.getElementById('j-cat').value,
+    text,
+    images:[...pendingImgs],
+  });
+  document.getElementById('j-text').value='';document.getElementById('j-date').value='';
+  pendingImgs=[];renderPreview();
+  save();renderJournal();closeModal();
+}
+function deleteJournal(i){if(!confirm('Supprimer cette entrée ?'))return;state.journal.splice(i,1);save();renderJournal();}
+
+/* ── UTILS ── */
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+/* ── INTERSECTION OBSERVER ── */
+function observeFade(){
+  const els=document.querySelectorAll('.fade-in:not(.visible)');
+  const io=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');io.unobserve(e.target);}});},{threshold:.12});
+  els.forEach(el=>io.observe(el));
+}
+
+/* ── INIT ── */
+renderStages();renderHosts();renderJournal();updateStats();
+setTimeout(observeFade,100);
+</script>
+</body>
+</html>
